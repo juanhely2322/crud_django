@@ -14,6 +14,7 @@ from django.db import IntegrityError
 from .forms import CreateTaskForm
 from .models import task
 from django.utils import timezone
+from django.contrib.auth.decorators import login_required
 
 
 # Create your views here.
@@ -41,15 +42,15 @@ def signup(request):
         else:
             return render(request, "singup.html", {'form': UserCreationForm, "error": "Password do not match"})
 
-
+@login_required
 def tasks(request):
     tasks = task.objects.filter(user=request.user,datecomplete__isnull=True)
     return (render(request, "tasks.html",{"tasks":tasks,"estute":"Incompleted"}))
-
+@login_required
 def task_completed(request):
     tasks = task.objects.filter(user=request.user,datecomplete__isnull=False).order_by("-datecomplete")
     return render(request,"tasks.html",{"tasks":tasks,"estute":"Completed"})
-
+@login_required
 def create_task(request):
     if request.method == "GET":
         return render(request, "created_task.html", {
@@ -70,7 +71,8 @@ def create_task(request):
                      })
 
 
-#listar tarea individual    
+#listar tarea individual
+@login_required    
 def task_detail(request,task_id):
     if request.method=="GET":
         tasks=get_object_or_404(task,pk=task_id,user=request.user)
@@ -85,7 +87,7 @@ def task_detail(request,task_id):
         except ValueError:
             return render(request,("task_detail.html"),{"tasks":tasks, "form":form, "error":"Error updating task"})
 
-
+@login_required
 def complete_task(request,task_id):
     tasks=get_object_or_404(task, pk=task_id, user=request.user)
     if  request.method=="POST":
@@ -93,7 +95,7 @@ def complete_task(request,task_id):
         tasks.save()
         #print(tasks.save())
         return redirect("tasks")
-    
+@login_required   
 def delete_task(request,task_id):
     tasks=get_object_or_404(task, pk=task_id, user=request.user)
     if  request.method=="POST":
@@ -104,6 +106,7 @@ def delete_task(request,task_id):
     
 
 # cerrar session
+@login_required
 def logout_session(request):
     logout(request)
     return redirect("home")
