@@ -1,5 +1,21 @@
-{% extends "base.html"%}
-
+{% extends "base.html" %} 
 {% block content %}
-<h1>Tasks</h1>
-{% endblock %}
+<h1>Tasks {{estute}}</h1>
+{% for task in tasks %}
+
+<ul>
+  <li>
+    <a href="{% url 'task_detail' task.id %}">
+      {% if task.important %}
+      <strong>{{task.title}}</strong>
+      {% else %}
+      <h2>{{task.title}}</h2>
+      {% endif %}
+      <p>{{task.user.username}}</p>
+      <p>{{task.datecomplete|date:"M j Y:i"}}</p>
+    </a>
+  </li>
+</ul>
+
+{% endfor %}
+ {% endblock %}

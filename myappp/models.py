@@ -10,7 +10,7 @@ class task(models.Model):
     title= models.CharField(max_length=100)
     description=models.TextField(blank=True)# blanck=True en caso de que no envie nada el campo permanecera bacio
     created=models.DateTimeField(auto_now_add=True)
-    datecomplete=models.DateTimeField(null=True)
+    datecomplete=models.DateTimeField(null=True, blank=True)
     important=models.BooleanField(default=False) 
     user=models.ForeignKey(User,on_delete=models.CASCADE)
     #str , self hace referencia a la propia clase

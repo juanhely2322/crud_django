@@ -1,13 +1,19 @@
+
+import re
 from django.http import HttpResponse
-from django.shortcuts import render, redirect
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm # trae formulario de registro o signup
+from django.shortcuts import render, redirect,get_object_or_404
+# trae formulario de registro o signup
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 # con esta funsion se puede crear una cookie para manter la secion aciva
-from django.contrib.auth import login,logout,authenticate #login= crea cookie para mantener inicio de sesion 
-#logut= sirve para cerrar la secion
-#authenticate= sirve para verificar que el usuario exista y la contraseña este correcta e iniciar secion
+# login= crea cookie para mantener inicio de sesion
+from django.contrib.auth import login, logout, authenticate
+# logut= sirve para cerrar la secion
+# authenticate= sirve para verificar que el usuario exista y la contraseña este correcta e iniciar secion
 from django.db import IntegrityError
 from .forms import CreateTaskForm
+from .models import task
+from django.utils import timezone
 
 
 # Create your views here.
@@ -26,7 +32,7 @@ def signup(request):
                 user = User.objects.create_user(
                     username=request.POST["username"], password=request.POST["password1"])
                 user.save()
-                
+
                 login(request, user)
 
                 return redirect("tasks")
@@ -36,31 +42,83 @@ def signup(request):
             return render(request, "singup.html", {'form': UserCreationForm, "error": "Password do not match"})
 
 
-
 def tasks(request):
-    return (render(request, "tasks.html" ))
+    tasks = task.objects.filter(user=request.user,datecomplete__isnull=True)
+    return (render(request, "tasks.html",{"tasks":tasks,"estute":"Incompleted"}))
+
+def task_completed(request):
+    tasks = task.objects.filter(user=request.user,datecomplete__isnull=False).order_by("-datecomplete")
+    return render(request,"tasks.html",{"tasks":tasks,"estute":"Completed"})
 
 def create_task(request):
-    return render(request,"created_task.html",{
-        "form": CreateTaskForm,
-    })
+    if request.method == "GET":
+        return render(request, "created_task.html", {
+            "form": CreateTaskForm,
+        })
+    else:
+        try:
+            form = CreateTaskForm(request.POST)
+            new_task = form.save(commit=False)
+            new_task.user = request.user
+            new_task.save()
+            return redirect("tasks")
+        
+        except ValueError:
+                 return render(request, "created_task.html", {
+                "error":"please provide valide data",
+ 
+                     })
 
-#cerrar session
+
+#listar tarea individual    
+def task_detail(request,task_id):
+    if request.method=="GET":
+        tasks=get_object_or_404(task,pk=task_id,user=request.user)
+        form = CreateTaskForm(instance=tasks)
+        return render(request,("task_detail.html"),{"tasks":tasks, "form":form})
+    else:
+        try:
+            tasks=get_object_or_404(task,pk=task_id,user=request.user)
+            form=CreateTaskForm(request.POST,instance=tasks)
+            form.save()
+            return redirect("tasks")
+        except ValueError:
+            return render(request,("task_detail.html"),{"tasks":tasks, "form":form, "error":"Error updating task"})
+
+
+def complete_task(request,task_id):
+    tasks=get_object_or_404(task, pk=task_id, user=request.user)
+    if  request.method=="POST":
+        tasks.datecomplete = timezone.now()
+        tasks.save()
+        #print(tasks.save())
+        return redirect("tasks")
+    
+def delete_task(request,task_id):
+    tasks=get_object_or_404(task, pk=task_id, user=request.user)
+    if  request.method=="POST":
+        tasks.delete()
+        return redirect("tasks")
+         
+    
+    
+
+# cerrar session
 def logout_session(request):
     logout(request)
     return redirect("home")
-#inicio sesion
+# inicio sesion
+
+
 def login_session(request):
-    if request.method== "GET":
-        return render (request,"login.html",{"form":AuthenticationForm})
+    if request.method == "GET":
+        return render(request, "login.html", {"form": AuthenticationForm})
     else:
-        user= authenticate(request,username=request.POST["username"],password=request.POST["password"])
+        user = authenticate(
+            request, username=request.POST["username"], password=request.POST["password"])
         if user is None:
-            return render (request,"login.html",{"form":AuthenticationForm, 
-                                             "error": "Username o password is incorrect"})
+            return render(request, "login.html", {"form": AuthenticationForm,
+                                                  "error": "Username o password is incorrect"})
         else:
             login(request, user)
             return redirect("tasks")
-        
-     
-    
