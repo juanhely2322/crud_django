@@ -1,9 +1,12 @@
 {% extends "base.html"%}
 {% block content %}
 
-<h1>Task </h1>
+<main class="container">
+    <div class=""row>
+        <div class="col-md-4 offset-md-4">
+            <h1>Task </h1>
 
-<h1>{{tasks.title}}</h1>
+<h1 class="text-secondary">{{tasks.title}}</h1>
 <h6>Creation: {{tasks.created}}</h6>
 <p>{{tasks.description}} </p>
 {% if tasks.important %}
@@ -15,23 +18,31 @@
         {% csrf_token %}
         {{error}}
         {{form.as_p}}
-        <button>
+        <button class="btn btn-primary">
             Update
         </button>
     </form>
 
-    <form action="{% url 'complete_task' tasks.id %}" method="POST">
-        {% csrf_token %}
-        <button>
-            Complete
-        </button>
-    </form>
-  
-    <form action="{% url 'delete_task' tasks.id %}" method="POST">
-        {% csrf_token %}
-        <button>
-            Delete
-        </button>
-    </form>
+    <div class="mt-5 d-flex ">
+       
+        <form action="{% url 'complete_task' tasks.id %}" method="POST">
+            {% csrf_token %}
+            <button class="btn btn-secondary">
+                Complete
+            </button>
+        </form>
+      
+        <form action="{% url 'delete_task' tasks.id %}" method="POST">
+            {% csrf_token %}
+            <button class="btn btn-danger">
+                Delete
+            </button>
+        </form>
+    
+    </div>
+        </div>
+    </div>
+</main>
+
     
 {% endblock %}

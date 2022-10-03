@@ -11,7 +11,8 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
 from pathlib import Path
-
+import os #se esta usando para desplegar en render.com
+import dj_database_url #se esta usando para desplegar en render.com
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -20,13 +21,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ffig9%eyc33t*w7dgm!^=6&5jeoi30@p3a6xixy(t(pkbc&a#o'
+#SECRET_KEY = 'django-insecure-ffig9%eyc33t*w7dgm!^=6&5jeoi30@p3a6xixy(t(pkbc&a#o' 
+
+SECRET_KEY=os.environ.get('SECRET_KEY',default='your secret key')#se esta usando para desplegar en render.com
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
+#DEBUG = True #se esta usando para desplegar en render.com
+DEBUG = 'RENDER' not in os.environ #se esta usando para desplegar en render.com
 ALLOWED_HOSTS = []
 
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')#se esta usando para desplegar en render.com
+if RENDER_EXTERNAL_HOSTNAME:   
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 # Application definition
 
@@ -48,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',#se esta usando para desplegar en render.com
 ]
 
 ROOT_URLCONF = 'crud_django.urls'
@@ -75,17 +82,10 @@ WSGI_APPLICATION = 'crud_django.wsgi.application'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        #'ENGINE': 'django.db.backends.sqlite3',
-        #'NAME': BASE_DIR / 'db.sqlite3',
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME':"tasks",
-        "USER": "root",
-        "PASSWORD":"juan2001%",
-        "HOST":"localhost",
-        "PORT":"3306"
-    }
-}
+    'default': dj_database_url.config(default='postgresql://postgres:postgres@localhost/postgres',
+     conn_max_age=600                                 
+                                      )
+}#se esta usando para desplegar en render.com
 
 
 # Password validation
@@ -123,7 +123,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+#STATICFILES_DIRS = [BASE_DIR / 'static']
+if not DEBUG:    # Tell Django to copy statics to the `staticfiles` directory
+    # in your application directory on Render.
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    # Turn on WhiteNoise storage backend that takes care of compressing static files
+    # and creating unique names for each version so they can safely be cached forever.
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 LOGIN_URL="/login"
 
